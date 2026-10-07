@@ -1,2 +1,5 @@
 #!/usr/bin/env python3
-print("DB project is runnings")
+
+from primitive_db.engine import welcome
+
+welcome()
