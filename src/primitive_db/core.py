@@ -39,3 +39,11 @@ def drop_table(metadata: dict[str, dict], table_name: str) -> dict[str, dict]:
         return metadata
     del metadata[table_name]
     return metadata
+
+def list_tables(metadata: dict[str, dict]) -> list[str]:
+    """
+    Функция list_tables представляет данные о имеющихся таблицах
+    в базе данных
+    """
+    result = list(metadata.keys())
+    return result

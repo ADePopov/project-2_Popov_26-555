@@ -10,7 +10,6 @@ def load_metadata(filepath) -> dict:
             data = json.load(file)  
         return data
     except FileNotFoundError as e:
-        print(f'Ошибка {e}')
         return {}
     
 def save_metadata(filepath, data: dict) -> bool:

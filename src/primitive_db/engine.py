@@ -1,50 +1,84 @@
-from prompt import string
 import shlex
+from prompt import string
 
+from primitive_db.core import (
+    create_table,
+    drop_table,
+    list_tables
+)
+from primitive_db.utils import  (
+    load_metadata,
+    save_metadata
+)
 
 def welcome():
     print('Первая попытка запустить проект!')
     print()
-    print('')
     print('***')
     print("<command> exit - выйти из программы")
     print("<command> help - справочная информация")
-    while True:
-        command = string('Введите команду: ').strip().lower()
 
-        if command == 'exit':
-            break
-        elif command == 'help':
-            print("<command> exit - выйти из программы")
-            print("<command> help - справочная информация")
-        else:
-            print('Неизвестная команда. Введите help для справки')
-
-from primitive_db.engine import (
-                                load_metadata, 
-                                create_table, 
-                                drop_table,
-                                save_metadata
-)
 
 def run(filepath):
+    '''
+    Основная функция отвечающая за вызовы:
+    create_table
+    drop_table
+    list_tables
+    '''
     while True:
-        metadata = load_metadata(filepath) 
-        print('Формат запроса: create_table 'name_table' 'str' 'int' 'st...'')
-        user_input = string('Введите запрос: ').strip().lower()
-        lexer = shlex.shlex(user_input)
-        col = []
-        if lexer[0] == 'create_table':
-            if isinstance(lexer[1], str):
-                for lex in lexer[2:]:
-                    if isinstance(lex, str):
-                        col.append(lex)
-                    else:
-                        print(f'Добавление атрибута - {lex} невозможно, так как это не строка')
-                create_table(metadata, lexer[1], col)            
-                save_metadata(filepath, lexer)
+        metadata = load_metadata(filepath)
+        
+        user_input = string('Введите запрос: ').strip()
+        if not user_input:
+            continue
+
+        lexer = shlex.split(user_input)
+        if not lexer:
+            continue
+        com = lexer[0].lower()
+
+        if com == 'exit':
+            break
+
+        elif com == 'help':
+            print("\n***Процесс работы с таблицей***")
+            print("Функции:")
+            print("<command> create_table <имя_таблицы> <столбец1:тип> .. - создать таблицу")
+            print("<command> list_tables - показать список всех таблиц")
+            print("<command> drop_table <имя_таблицы> - удалить таблицу")
+            
+            print("\nОбщие команды:")
+            print("<command> exit - выход из программы")
+            print("<command> help - справочная информация\n")
+            
+        elif com == 'create_table':
+            if len(lexer) < 4:
+                print(f'Ошибка: нужно имя таблицы и хотя бы один столбец, какой будет тип. Сейчас {len(lexer)}') 
+                continue
+            table_name = lexer[1]
+            atr = lexer[2:]
+            if len(atr) % 2 != 0:
+                print('Ошибка: имя столбца и атрибуты должны быть парными')
+                continue
+            col = [(atr[i], atr[i+1]) for i in range(0, len(atr), 2)]
+            metadata = create_table(metadata, table_name, col)
+            save_metadata(filepath, metadata)
+
+        elif com == 'drop_table':
+            if len(lexer) < 2:
+                print('Ошибка: указаны не все атрибуты. Необходимо указать название таблицы')
+                continue
+            metadata = drop_table(metadata, lexer[1])
+            save_metadata(filepath, metadata)
+
+        elif com == 'list_tables':
+            res = list_tables(metadata)
+            if not res:
+                print('Таблиц нет')
             else:
-                print(f'Название таблицы не принято {lexer[1]} - не является строкой.')
-                
-        elif lexer[0] == 'drop_table':
-        return metadata
+                for r in res:
+                    print(r) 
+
+        else:
+            print('Неизвестная команда')
