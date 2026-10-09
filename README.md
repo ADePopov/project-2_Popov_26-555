@@ -9,6 +9,7 @@ uv run python -m primitive_db.main
 Команда	с описанием:
 create_table - cоздать таблицу
 drop_table - удалить таблицу
+list_tables - показать все таблицы
 help - справка
 exit - Выход
 Типы данных: int, str, bool. 
@@ -16,5 +17,7 @@ exit - Выход
 
 Пример.
 Введите запрос: create_table users name str age int
+Введите запрос: list_tables
+users
 Введите запрос: drop_table users
 Введите запрос: exit
