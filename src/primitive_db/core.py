@@ -47,3 +47,24 @@ def list_tables(metadata: dict[str, dict]) -> list[str]:
     """
     result = list(metadata.keys())
     return result
+
+def insert(metadata, table_name, values):
+    """
+    Проверяет, существует ли таблица.
+    Проверяет, что количество переданных значений соответствует количеству столбцов (минус ID).
+    Валидирует типы данных для каждого значения в соответствии со схемой в metadata.
+    Генерирует новый ID (например, max(IDs) + 1 или len(data) + 1).
+    Добавляет новую запись (в виде словаря) в данные таблицы и возвращает их.
+    """
+    if table_name not in metadata:
+        return f'Таблицы {table_name} - не существует'
+
+    val_col = len(metadata[table_name]['columns'])
+    val = len(values)
+    if val_col - 1 < val:
+        return f'количество передаваемых значений не соответствует количеству столбцов. {val_col} < {val}'
+
+    col = [col['type'] for col in metadata[table_name]['columns']]
+    for val, c in zip(values, col):
+        if not type(val).__name__==c:
+            return f'Тип введенное значение не соответсвует необходимому значению. {type(val).__name__} != {c}'
