@@ -4,6 +4,7 @@ primitive-db
 Запуск
 
 uv run python -m primitive_db.main
+**Примечание:** демонстрации записаны в Linux (WSL), где проект запускается через `uv run`. В Windows-окружении то же самое доступно командой `database` после `uv tool install`.
 
 Управление таблицами.
 Команда	с описанием:
@@ -21,7 +22,7 @@ exit - Выход
 users
 Введите запрос: drop_table users
 Введите запрос: exit
-https://asciinema.org/a/SzmSTccoFuRRusOz
+демонстрация - https://asciinema.org/a/SzmSTccoFuRRusOz
 
 # CRUD-операции
 
@@ -44,7 +45,32 @@ https://asciinema.org/a/SzmSTccoFuRRusOz
 
 # Примеры
 
-**Добавление записи:**
+**Добавление записей:**
 insert users Аня 25
 insert users Боря 30
 insert orders 500 true
+
+
+**Просмотр:**
+select users
+select users where age = 25
+select users where name = 'Аня'
+select users where age = 25 name = 'Аня'
+
+
+**Обновление:**
+update users set age = 26 where name = 'Аня'
+update orders set paid = false where price = 500
+
+
+**Удаление:**
+delete users where age = 30
+delete orders where paid = false
+delete users
+
+
+# Вывод `select`
+
+Результат выводится в виде таблицы
+
+демонстрация - https://asciinema.org/a/umPSKlT5GQemkwgt
