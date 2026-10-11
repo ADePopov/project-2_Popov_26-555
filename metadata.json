@@ -1,1 +1,34 @@
-{}
+{
+    "users": {
+        "columns": [
+            {
+                "name": "ID",
+                "type": "int"
+            },
+            {
+                "name": "name",
+                "type": "str"
+            },
+            {
+                "name": "age",
+                "type": "int"
+            }
+        ]
+    },
+    "orders": {
+        "columns": [
+            {
+                "name": "ID",
+                "type": "int"
+            },
+            {
+                "name": "price",
+                "type": "int"
+            },
+            {
+                "name": "paid",
+                "type": "bool"
+            }
+        ]
+    }
+}

@@ -7,11 +7,10 @@ def load_metadata(filepath) -> dict:
     load_metadata(filepath): Загружает данные из JSON-файла. 
     Если файл не найден, возвращает пустой словарь {}
     """
-    try: 
-        with open(filepath, 'r', encoding='utf-8') as file:
-            data = json.load(file)  
-        return data
-    except FileNotFoundError:
+    try:
+        with open(filepath, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
         return {}
     
 def save_metadata(filepath, data: dict) -> bool:
@@ -19,7 +18,7 @@ def save_metadata(filepath, data: dict) -> bool:
     save_metadata(filepath, data): Сохраняет переданные данные в JSON-файл.
     '''
     try:
-        with open(filepath, 'w', encoding='uft-8') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
         return True 
     except OSError as e:
@@ -32,7 +31,7 @@ def load_table_data(table_name: str) -> list[dict]:
     """
     filepath = f'data/{table_name}.json'
     try:
-        with open(filepath, 'r', encoding='uft-8') as f:
+        with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
         return []
@@ -43,5 +42,5 @@ def save_table_data(table_name: str, data: list[dict]):
     """
     os.makedirs('data', exist_ok = True)
     filepath = f'data/{table_name}.json'
-    with open(filepath, 'w', encoding='uft-8') as f:
+    with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
