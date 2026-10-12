@@ -2,6 +2,7 @@ primitive-db
 Учебный проект — имитация базы данных на Python. Метаданные хранятся в JSON-файле, команды вводятся через CLI.
 
 Запуск
+uv sync
 
 uv run python -m primitive_db.main
 **Примечание:** демонстрации записаны в Linux (WSL), где проект запускается через `uv run`. В Windows-окружении то же самое доступно командой `database` после `uv tool install`.
