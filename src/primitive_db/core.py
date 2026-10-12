@@ -1,3 +1,4 @@
+from primitive_db.constants import ALLOWED_TYPES, BOOLEAN_TRUE
 from primitive_db.decorators import (
     confirm_action,
     handle_db_errors,
@@ -21,7 +22,7 @@ def create_table(
         print(f"Ошибка, таблица {table_name} существует.")
         return metadata
 
-    allow_data = {"int", "str", "bool"}
+    allow_data = ALLOWED_TYPES
     for name, col_type in columns:
         if col_type not in allow_data:
             print(f"Ошибка: недопустимый тип {col_type} для столбца {name}.")
@@ -79,7 +80,7 @@ def insert(
         if c["type"] == "int":
             result.append(int(v))
         elif c["type"] == "bool":
-            result.append(v.lower() in ("1", "true", "yes"))
+            result.append(v.lower() in BOOLEAN_TRUE)
         else:
             result.append(str(v))
 

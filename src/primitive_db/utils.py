@@ -1,6 +1,8 @@
 import json
 import os
 
+from primitive_db.constants import DATA_DIR
+
 
 def load_metadata(filepath) -> dict:
     """
@@ -31,19 +33,19 @@ def load_table_data(table_name: str) -> list[dict]:
     """
     загружает ранее внесенные данные для таблицы в json формате
     """
-    filepath = f"data/{table_name}.json"
+    filepath = f"{DATA_DIR}/{table_name}.json"
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             return json.load(f)
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError):
         return []
 
 
-def save_table_data(table_name: str, data: list[dict]):
+def save_table_data(table_name: str, data: list[dict]) -> None:
     """
     сохраняет вносимые данные для таблицы в json формате
     """
-    os.makedirs("data", exist_ok=True)
-    filepath = f"data/{table_name}.json"
+    os.makedirs(DATA_DIR, exist_ok=True)
+    filepath = f"{DATA_DIR}/{table_name}.json"
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)

@@ -119,7 +119,7 @@ def run(filepath):
                 print("Ошибка: указаны не все атрибуты. Укажите название таблицы")
                 continue
             metadata = drop_table(metadata, lexer[1])
-            if isinstance(metadata, str):  # ← отмена
+            if isinstance(metadata, str):
                 print(metadata)
                 continue
             save_metadata(filepath, metadata)
