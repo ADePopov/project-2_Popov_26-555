@@ -101,4 +101,4 @@ delete users
 Повторный одинаковый запрос не читает файл заново — отдаёт результат из кэша. Кэш сбрасывается после `insert`, `update`, `delete`, `drop_table`, `create_table`.
 
 
-демонстрация - 
+демонстрация - https://asciinema.org/a/TQ05FV1XE7uxvNtU
