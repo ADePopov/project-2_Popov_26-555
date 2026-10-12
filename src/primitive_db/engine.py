@@ -1,24 +1,27 @@
 import shlex
-from prompt import string
+
 from prettytable import PrettyTable
+from prompt import string
 
 from primitive_db.core import (
     create_table,
+    delete,
     drop_table,
-    list_tables,
     insert,
+    list_tables,
+    pars_set,
+    pars_where,
     select,
     update,
-    delete,
-    pars_where,
-    pars_set
 )
-from primitive_db.utils import  (
+from primitive_db.decorators import create_cacher
+from primitive_db.utils import (
     load_metadata,
-    save_metadata,
     load_table_data,
-    save_table_data
+    save_metadata,
+    save_table_data,
 )
+
 
 def print_table(rows: list[dict]) -> None:
     """Печатает список словарей как таблицу."""
@@ -49,6 +52,8 @@ def run(filepath):
     drop_table
     list_tables
     '''
+    cache_result = create_cacher()
+    
     while True:
         metadata = load_metadata(filepath)
         
@@ -67,13 +72,18 @@ def run(filepath):
         elif com == 'help':
             print("\n***Процесс работы с таблицей***")
             print("Функции:")
-            print("<command> create_table <имя_таблицы> <столбец1:тип> .. - создать таблицу")
+            print("<command> create_table <имя_таблицы> "
+            "<столбец1:тип> .. - создать таблицу")
             print("<command> list_tables - показать список всех таблиц")
             print("<command> drop_table <имя_таблицы> - удалить таблицу")
-            print("<command> insert <имя_таблицы> <значение1> <значение2> ... - добавить запись")
-            print("<command> select <имя_таблицы> [where <столбец> = <значение> ...] - показать записи")
-            print("<command> update <имя_таблицы> set <столбец> = <значение> where <столбец> = <значение> - обновить записи")
-            print("<command> delete <имя_таблицы> [where <столбец> = <значение> ...] - удалить записи")
+            print("<command> insert <имя_таблицы> "
+            "<значение1> <значение2> ... - добавить запись")
+            print("<command> select <имя_таблицы> "
+            "[where <столбец> = <значение> ...] - показать записи")
+            print("<command> update <имя_таблицы> set <столбец> = "
+            "<значение> where <столбец> = <значение> - обновить записи")
+            print("<command> delete <имя_таблицы> "
+            "[where <столбец> = <значение> ...] - удалить записи")
             print()
             print("\nОбщие команды:")
             print("<command> exit - выход из программы")
@@ -81,7 +91,7 @@ def run(filepath):
             
         elif com == 'create_table':
             if len(lexer) < 4:
-                print(f'Ошибка: нужно имя таблицы и хотя бы один столбец, какой будет тип. Сейчас {len(lexer)}') 
+                print('Ошибка: нужно имя таблицы и хотя бы один столбец.') 
                 continue
             table_name = lexer[1]
             atr = lexer[2:]
@@ -91,13 +101,18 @@ def run(filepath):
             col = [(atr[i], atr[i+1]) for i in range(0, len(atr), 2)]
             metadata = create_table(metadata, table_name, col)
             save_metadata(filepath, metadata)
+            cache_result.clear()
 
         elif com == 'drop_table':
             if len(lexer) < 2:
-                print('Ошибка: указаны не все атрибуты. Необходимо указать название таблицы')
+                print('Ошибка: указаны не все атрибуты. Укажите название таблицы')
                 continue
             metadata = drop_table(metadata, lexer[1])
+            if isinstance(metadata, str):     # ← отмена
+                print(metadata)
+                continue
             save_metadata(filepath, metadata)
+            cache_result.clear()
 
         elif com == 'list_tables':
             res = list_tables(metadata)
@@ -126,6 +141,7 @@ def run(filepath):
                 continue
 
             save_table_data(table_name, result)
+            cache_result.clear()
             print("Запись добавлена")
 
         elif com == 'select':
@@ -150,8 +166,10 @@ def run(filepath):
             else:
                 where_clause = None
 
-            table_data = load_table_data(table_name)
-            result = select(table_data, where_clause)
+            key = (table_name,frozenset(where_clause.items()) 
+                   if where_clause else None)
+            result = cache_result(key, lambda: 
+                                  select(load_table_data(table_name), where_clause))
 
             print_table(result)
         
@@ -185,6 +203,7 @@ def run(filepath):
             table_data = load_table_data(table_name)
             result = update(table_data, set_clause, where_clause)
             save_table_data(table_name, result)
+            cache_result.clear()
             print("Данные обновлены")
 
         elif com == 'delete':
@@ -211,7 +230,11 @@ def run(filepath):
 
             table_data = load_table_data(table_name)
             result = delete(table_data, where_clause)
+            if isinstance(result, str):      
+                print(result)
+                continue
             save_table_data(table_name, result)
+            cache_result.clear()
             print("Данные удалены")
 
         else:

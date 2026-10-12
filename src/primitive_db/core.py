@@ -1,3 +1,8 @@
+from primitive_db.decorators import (
+    confirm_action,
+    handle_db_errors,
+    log_time,
+)
 from primitive_db.utils import load_table_data
 
 
@@ -31,15 +36,14 @@ def create_table(
     metadata[table_name] = {'columns':full_columns}
     return metadata
 
+@handle_db_errors
+@confirm_action('удаление таблицы')
 def drop_table(metadata: dict[str, dict], table_name: str) -> dict[str, dict]:
     '''
     функция drop_table(metadata, table_name).
     Проверяет существование таблицы. Если таблицы нет, выводит ошибку.
     Удаляет информацию о таблице из metadata и возвращает обновленный словарь.
     '''
-    if table_name not in metadata:
-        print(f'Ошибка, таблица {table_name} не существует.') 
-        return metadata
     del metadata[table_name]
     return metadata
 
@@ -51,50 +55,35 @@ def list_tables(metadata: dict[str, dict]) -> list[str]:
     result = list(metadata.keys())
     return result
 
+@log_time
+@handle_db_errors
 def insert(metadata: dict[str, dict],
     table_name: str,
     values: list[str],
 ) -> list[dict] | str:
     """
     Проверяет, существует ли таблица.
-    Проверяет, что количество переданных значений соответствует количеству столбцов (минус ID).
+    Проверяет, что количество переданных значений соответствует 
+    количеству столбцов (минус ID).
     Валидирует типы данных для каждого значения в соответствии со схемой в metadata.
     Генерирует новый ID (например, max(IDs) + 1 или len(data) + 1).
     Добавляет новую запись (в виде словаря) в данные таблицы и возвращает их.
     """
-    if table_name not in metadata:
-        return f'Таблицы {table_name} - не существует'
-
-    col = [c['type'] for c in metadata[table_name]['columns'] if c['name'] != 'ID']
-    col_names = [c["name"] for c in metadata[table_name]["columns"] if c["name"] != "ID"]
-
-    if len(values) != len(col):
-        return f'Необходимо {len(col)} значений, получено {len(values)} значений'
+    col = metadata[table_name]["columns"][1:]    
+    col_names = [c["name"] for c in col]
 
     result = []
     for c, v in zip(col, values):
-        try:
-            if c == 'int':
-                result.append(int(v))
-            elif c == 'bool':
-                low = v.lower()
-                if low in ('1', 'true', 'yes'):
-                    result.append(True)
-                elif low in ('0', 'false', 'no'):
-                    result.append(False)
-                else:
-                    return f"'{v}' не является bool"
-            else:
-                result.append(str(v))
-        except ValueError:
-            return f'{v} не соответствует типу {c}'
+        if c["type"] == "int":
+            result.append(int(v))                         
+        elif c["type"] == "bool":
+            result.append(v.lower() in ("1", "true", "yes"))
+        else:
+            result.append(str(v))
 
     data = load_table_data(table_name)
 
-    try:
-        new_id = max((row.get("ID", 0) for row in data), default=0) + 1
-    except ValueError:
-        new_id = 1
+    new_id = max((row.get("ID", 0) for row in data), default=0) + 1
 
     new_row = {"ID": new_id}
     for name, val in zip(col_names, result):
@@ -103,6 +92,7 @@ def insert(metadata: dict[str, dict],
     data.append(new_row)
     return data
 
+@log_time
 def select(table_data: list[dict], where_clause: dict | None = None) -> list[dict]:
     """
     Возвращает список строк из table_data, соответствующих where_clause.
@@ -134,6 +124,7 @@ def update(table_data: list[dict], set_clause: dict, where_clause: dict) -> list
                 row[col] = val
     return table_data
 
+@confirm_action('удаление данных')
 def delete(table_data: list[dict], where_clause: dict | None = None) -> list[dict]:
     """
     Находит записи по where_clause и удаляет их.
@@ -154,12 +145,12 @@ def pars_where(args:list) -> dict | str:
     Функция парсит введенный список и возвращает словарь
     """
     if len(args) % 3 != 0:
-        return f'Некорректный ввод значений'
+        return 'Некорректный ввод значений'
 
     result = {}
     for i in range(0, len(args), 3):
         if args[i+1] != '=':
-            return f"Присваивание необходимо провести через знак '=', сейчас {args[i+1]}"
+            return f"Присваивание необходимо провести через '=', сейчас {args[i+1]}"
         col = args[i]
         raw = args[i + 2]
         if len(raw) >= 2 and raw[0] in ("'", '"') and raw[-1] == raw[0]:
@@ -180,11 +171,11 @@ def pars_set(args:list) -> dict | str:
     Функция парсит введенный список и возвращает словарь
     """
     if len(args) % 3 != 0:
-        return f'Некорректный ввод значений'
+        return 'Некорректный ввод значений'
     result = {}
     for i in range(0, len(args), 3):
         if args[i+1] != '=':
-            return f"Присваивание необходимо провести через знак '=', сейчас {args[i+1]}"
+            return f"Присваивание необходимо провести через '=', сейчас {args[i+1]}"
         col = args[i]
         raw = args[i + 2]
         if len(raw) >= 2 and raw[0] in ("'", '"') and raw[-1] == raw[0]:
